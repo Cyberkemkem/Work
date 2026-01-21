@@ -315,3 +315,147 @@ Zero Trust networking
 Secure traffic flow design
 
 Cloud security architecture
+
+**Phase 3 – Application Gateway & Web Application Firewall (WAF)
+Overview**
+
+Phase 3 focused on securing all inbound traffic into the environment using Azure Application Gateway (WAF v2).
+The objective was to introduce a single, hardened entry point for the application and remove any direct internet exposure to internal subnets.
+
+This phase establishes the ingress security layer for the architecture.
+
+**Objectives**
+
+Centralize inbound traffic through Azure Application Gateway
+
+Enable Web Application Firewall (WAF) with OWASP protections
+
+Enforce Zero Trust ingress (no direct public access to subnets)
+
+Prepare the environment for HTTPS and advanced protections
+
+**Application Gateway Deployment**
+An Azure Application Gateway was deployed with WAF v2 enabled.
+
+**Application Gateway Details**
+
+Name: agw-az-sec-waf
+
+Tier: WAF v2
+
+Resource Group: rg-az-sec-network
+
+Region: West Europe
+
+Availability Zones: 1, 2, 3
+
+Frontend: Public IPv4
+
+Autoscaling: Enabled
+
+A dedicated subnet was created for the gateway, following Azure best practices.
+<img width="1913" height="1028" alt="appgw deployed" src="https://github.com/user-attachments/assets/4525587f-91f6-406e-82ef-3cdb5dc5bff1" />
+
+**Dedicated Gateway Subnet**
+
+To isolate the Application Gateway, a separate subnet was created:
+
+Subnet	Address Range	Purpose
+snet-appgw	10.0.10.0/24	Application Gateway only
+
+No NSG or route table was attached to this subnet, as required by Azure.
+<img width="1910" height="947" alt="appgw subnet created" src="https://github.com/user-attachments/assets/1a65130d-2dc0-4dfe-b1fc-a2172ec90156" />
+
+**Backend Pool & Routing**
+
+A backend pool was configured to represent the UI tier.
+
+Backend pool: bp-ui
+
+Target type: IP address (placeholder)
+
+Purpose: Validate routing and health probe behavior
+
+A basic HTTP listener and routing rule were created:
+
+Listener: listener-http (HTTP :80)
+
+Routing rule: rule-http-ui
+
+Backend settings: http-ui-settings (HTTP, port 80)
+
+At this stage, the backend is intentionally unhealthy because no workload has been deployed yet. This validates that health probes and routing are functioning correctly.
+<img width="1757" height="986" alt="routing rule page" src="https://github.com/user-attachments/assets/49cac585-813d-4ec3-b77b-2c2eaad8db2a" />
+<img width="1905" height="934" alt="image" src="https://github.com/user-attachments/assets/42216d78-76f3-4a5b-9815-46ca2a8ba971" />
+
+**Web Application Firewall (WAF)**
+
+A custom WAF policy was created and associated with the Application Gateway.
+
+WAF Configuration
+
+Policy name: waf-policy-az-sec
+
+Policy state: Enabled
+
+Policy mode: Prevention
+
+Rule set: OWASP (default managed rules)
+
+The policy was initially created in Detection mode and then explicitly switched to Prevention, ensuring active blocking of malicious traffic.
+<img width="1912" height="948" alt="wAF PAGE" src="https://github.com/user-attachments/assets/be15ac62-56e7-4d85-8123-ddfd5f1e9101" />
+
+ **Network Lockdown**
+After deploying the Application Gateway, the network was tightened:
+
+Direct internet access to the UI subnet was removed
+
+NSG rules were updated to allow:
+
+Application Gateway → UI subnet
+
+All inbound traffic now follows:
+
+**Internet → WAF → UI → API → Backend**
+This enforces Zero Trust ingress and prevents accidental exposure.
+<img width="1903" height="968" alt="inbound sec ui appgw" src="https://github.com/user-attachments/assets/1ffd847d-40cf-4def-9c91-75ad13dcdf4b" />
+
+**Validation**
+
+The configuration was validated by:
+
+Confirming Application Gateway status was running
+
+Verifying WAF was enabled in Prevention mode
+
+Confirming routing rules and backend settings
+
+Observing expected backend health warnings (no deployed workload)
+
+Ensuring UI subnet had no direct internet access
+
+**Outcome of Phase 3**
+
+At the end of this phase:
+
+All inbound traffic is centralized and inspected
+
+OWASP Top 10 protections are enforced
+
+Public exposure of internal subnets is eliminated
+
+The environment is ready for HTTPS, Firewall, and DDoS integration
+
+**Key Skills Demonstrated**
+
+Azure Application Gateway (WAF v2)
+
+Web Application Firewall configuration
+
+OWASP managed rules
+
+Secure ingress design
+
+Zero Trust networking
+
+Cloud security architecture
